@@ -18,3 +18,5 @@
 ## Instalar MySQL Connector
 * pip3 install mysql-connector-python
 
+## Instalar FlaskReuploaded -  subir imagenes
+* pip3 install Flask-Reuploaded

@@ -2,10 +2,9 @@ from flask import Flask
 from flask import jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 
-"""
+
 from flask_uploads import UploadSet, configure_uploads, IMAGES
-from PIL import Image
-"""
+#from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -83,7 +82,6 @@ def delete_producto(id):
     return jsonify({'message': 'Producto eliminado'})
 
 
-"""
 @app.route('/upload', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
@@ -106,7 +104,7 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-"""
+
 
 
 if __name__ == '__main__':
