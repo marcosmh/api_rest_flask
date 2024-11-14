@@ -85,8 +85,11 @@ def upload_image(id):
     if 'image' not in request.files:
         return jsonify({'message': 'No image part'}), 400
     file = request.files['image']
+
+
     if file.filename == '':
         return jsonify({'message': 'No selected file'}), 400
+    
 
     if file and allowed_file(file.filename):
         filename = photos.save(file)
