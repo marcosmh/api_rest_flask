@@ -2,9 +2,7 @@ from flask import Flask
 from flask import jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 
-
 from flask_uploads import UploadSet, configure_uploads, IMAGES
-#from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -12,11 +10,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:admindba@localhost/api_rest_php'
 db = SQLAlchemy(app)
 
-"""
 photos = UploadSet('photos', IMAGES)
-configure_uploads(app, photos)
 app.config['UPLOADED_PHOTOS_DEST'] = 'static/img'
-"""
+configure_uploads(app, photos)
 
 
 
@@ -82,8 +78,10 @@ def delete_producto(id):
     return jsonify({'message': 'Producto eliminado'})
 
 
-@app.route('/upload', methods=['POST'])
-def upload_image():
+@app.route('/upload/<int:id>', methods=['POST','GET'])
+def upload_image(id):
+    print("Subir imagen...")
+    
     if 'image' not in request.files:
         return jsonify({'message': 'No image part'}), 400
     file = request.files['image']
@@ -92,16 +90,23 @@ def upload_image():
 
     if file and allowed_file(file.filename):
         filename = photos.save(file)
+        filename = id+"_"+filename
+        nameImg = f'static/img/{filename}'
+
+        # Guardar la ruta en la bd
+        producto = Producto.query.get_or_404(id)
+        producto.imagen = nameImg
 
         # Crear la miniatura
-        img = Image.open(f'static/img/{filename}')
+        img = Image.open(nameImg)
         img.thumbnail((128, 128))
         img.save(f'static/img/thumb_{filename}')
         return jsonify({'message': 'Image uploaded and thumbnail created', 'filename': filename})
+    
     return jsonify({'message': 'Invalid file'}), 400
 
 def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif','txt'}
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
