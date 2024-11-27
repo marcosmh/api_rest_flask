@@ -20,3 +20,6 @@
 
 ## Instalar FlaskReuploaded -  subir imagenes
 * pip3 install Flask-Reuploaded
+
+# Instalar Flask Cors
+* pip show flask-cors

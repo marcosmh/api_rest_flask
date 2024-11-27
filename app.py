@@ -1,10 +1,12 @@
 from flask import Flask
 from flask import jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all origins
 
 # Configuración de la base de datos MySQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:admindba@localhost/api_rest_php'
