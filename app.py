@@ -4,9 +4,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 from flask_uploads import UploadSet, configure_uploads, IMAGES
+from sqlalchemy import Null
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all origins
+#CORS(app)  # Enable CORS for all origins
+CORS(app, resources={r"/productos": {"origins": "http://localhost:4200"}})
 
 # Configuración de la base de datos MySQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:admindba@localhost/api_rest_php'
@@ -50,34 +52,54 @@ def get_producto(id):
 # Crear un nuevo producto
 @app.route('/productos', methods=['POST'])
 def create_producto():
-    data = request.get_json()
-    nuevo_producto = Producto(id=data['id'],nombre=data['nombre'], descripcion=data['descripcion'], 
-                              precio=data['precio'], imagen=data['imagen'] )
-    db.session.add(nuevo_producto)
-    db.session.commit()
-    return jsonify(nuevo_producto.json()), 201
+    print("create_producto:")
+    try:
+        data = request.get_json()
+    
+        nuevo_producto = Producto(nombre=data['nombre'], descripcion=data['descripcion'], 
+                                precio=data['precio'], imagen=data['imagen'] )
+        db.session.add(nuevo_producto)
+        db.session.commit()
+        print("Producto guardado correctamente.","[OK]")
+        return jsonify(nuevo_producto.json()), 201
+    except Exception as e:
+        json = jsonify({'error': str(e)})
+        print("Error: ",json)
+        return json, 400
 
 
 # Actualizar un producto
 @app.route('/productos/<int:id>', methods=['PUT'])
 def update_producto(id):
-    producto = Producto.query.get_or_404(id)
-    data = request.get_json()
-    producto.nombre = data['nombre']
-    producto.descripcion = data['descripcion']
-    producto.precio = data['precio']
-    producto.imagen = data['imagen']
-    db.session.commit()
-    return jsonify(producto.json())
+    print("update_producto:")
+    try:
+        producto = Producto.query.get_or_404(id)
+        data = request.get_json()
+        producto.nombre = data['nombre']
+        producto.descripcion = data['descripcion']
+        producto.precio = data['precio']
+        producto.imagen = data['imagen']
+        db.session.commit()
+        return jsonify(producto.json())
+    except Exception as e:
+        json = jsonify({'error': str(e)})
+        print("Error: ",json)
+        return json, 400
 
 
 # Eliminar un producto
 @app.route('/productos/<int:id>', methods=['DELETE'])
 def delete_producto(id):
-    producto = Producto.query.get_or_404(id)
-    db.session.delete(producto)
-    db.session.commit()
-    return jsonify({'message': 'Producto eliminado'})
+    print("delete_producto:")
+    try:
+        producto = Producto.query.get_or_404(id)
+        db.session.delete(producto)
+        db.session.commit()
+        return jsonify({'message': 'Producto eliminado'})
+    except Exception as e:
+        json = jsonify({'error': str(e)})
+        print("Error: ",json)
+        return json, 400
 
 
 @app.route('/upload/<int:id>', methods=['POST','GET'])
