@@ -3,12 +3,18 @@ from flask import jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
+from PIL import Image
+from werkzeug.utils import secure_filename
+
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from sqlalchemy import Null
 
 app = Flask(__name__)
 #CORS(app)  # Enable CORS for all origins
-CORS(app, resources={r"/productos": {"origins": "http://localhost:4200"}})
+CORS(app, resources={
+    r"/productos": {"origins": "http://localhost:4200"},
+    r"/uploads/*": {"origins": "http://localhost:4200"}
+})
 
 # Configuración de la base de datos MySQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:admindba@localhost/api_rest_php'
@@ -28,7 +34,7 @@ class Producto(db.Model):
     imagen      = db.Column(db.String(255))
 
     def __repr__(self):
-        return '<Producto %r>' % self.nombre
+        return '<Producto %r>' % self.nombre, self.descripcion, self.precio
     
     def json(self):
         return {'id': self.id, 'nombre': self.nombre, 'descripcion': self.descripcion, 
@@ -78,7 +84,7 @@ def update_producto(id):
         producto.nombre = data['nombre']
         producto.descripcion = data['descripcion']
         producto.precio = data['precio']
-        producto.imagen = data['imagen']
+        producto.imagen = id+"_"+data['imagen']
         db.session.commit()
         return jsonify(producto.json())
     except Exception as e:
@@ -101,41 +107,48 @@ def delete_producto(id):
         print("Error: ",json)
         return json, 400
 
-
-@app.route('/upload/<int:id>', methods=['POST','GET'])
-def upload_image(id):
-    print("Subir imagen...")
-    
-    if 'image' not in request.files:
-        return jsonify({'message': 'No image part'}), 400
-    file = request.files['image']
-
-
-    if file.filename == '':
-        return jsonify({'message': 'No selected file'}), 400
-    
-
-    if file and allowed_file(file.filename):
-        filename = photos.save(file)
-        filename = id+"_"+filename
-        nameImg = f'static/img/{filename}'
-
-        # Guardar la ruta en la bd
-        producto = Producto.query.get_or_404(id)
-        producto.imagen = nameImg
-
-        # Crear la miniatura
-        img = Image.open(nameImg)
-        img.thumbnail((128, 128))
-        img.save(f'static/img/thumb_{filename}')
-        return jsonify({'message': 'Image uploaded and thumbnail created', 'filename': filename})
-    
-    return jsonify({'message': 'Invalid file'}), 400
-
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif','txt'}
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/uploads/<int:id>', methods=['POST'])
+def upload_image(id):
+    print("Upload imagen...", id)
+
+    if request.method == 'POST':
+        if 'uploads[]' not in request.files:
+            return jsonify({'message': 'No hay parte de la imagen'}), 400
+
+        file = request.files['uploads[]']
+
+        if file.filename == '':
+            return jsonify({'message': 'No hay ningún archivo seleccionado'}), 400
+
+        if file and allowed_file(file.filename):
+            try:
+                filename = secure_filename(file.filename)
+                filename = str(id)+"_"+filename      
+                photos.save(file, filename)
+                nameImg = f'static/img/{filename}'
+
+                # Guardar la ruta en la bd
+                producto = Producto.query.get_or_404(id)
+                producto.imagen = nameImg
+                db.session.commit()
+
+                # Crear la miniatura
+                # img = Image.open(nameImg)
+                # img.thumbnail((128, 128))
+                # img.save(f'static/img/thumb_{filename}')
+                
+                return jsonify({'message': 'Se cargó la imagen y se creó la miniatura', 'filename': filename})
+            except Exception as e:
+                print(f"Error al cargar la imagen: {e}")
+                return jsonify({'message': 'Se ha producido un error durante la carga de la imagen'}), 500
+
+        return jsonify({'message': 'Archivo Invalido.'}), 400
 
 
 
