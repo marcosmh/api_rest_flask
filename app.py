@@ -63,7 +63,7 @@ def create_producto():
         data = request.get_json()
     
         nuevo_producto = Producto(nombre=data['nombre'], descripcion=data['descripcion'], 
-                                precio=data['precio'], imagen=data['imagen'] )
+                                precio=data['precio'] )
         db.session.add(nuevo_producto)
         db.session.commit()
         print("Producto guardado correctamente.","[OK]")
@@ -142,7 +142,6 @@ def upload_image(id):
                 # img = Image.open(nameImg)
                 # img.thumbnail((128, 128))
                 # img.save(f'static/img/thumb_{filename}')
-                
                 return jsonify({'message': 'Se cargó la imagen y se creó la miniatura', 'filename': filename})
             except Exception as e:
                 print(f"Error al cargar la imagen: {e}")
