@@ -13,6 +13,7 @@ app = Flask(__name__)
 #CORS(app)  # Enable CORS for all origins
 CORS(app, resources={
     r"/productos": {"origins": "http://localhost:4200"},
+    r"/productos/*": {"origins": "http://localhost:4200"},
     r"/uploads/*": {"origins": "http://localhost:4200"}
 })
 
@@ -51,8 +52,14 @@ def get_all_productos():
 
 @app.route('/productos/<int:id>', methods=['GET'])
 def get_producto(id):
-    producto = Producto.query.get_or_404(id)
-    return jsonify(producto.json())
+    print("get_producto: ", id)
+    try:
+        producto = Producto.query.get_or_404(id)
+        return jsonify(producto.json())
+    except Exception as e:
+        json = jsonify({'error': str(e)})
+        print("Error: ",json)
+        return json, 400
 
 
 # Crear un nuevo producto
@@ -84,7 +91,7 @@ def update_producto(id):
         producto.nombre = data['nombre']
         producto.descripcion = data['descripcion']
         producto.precio = data['precio']
-        producto.imagen = id+"_"+data['imagen']
+        #producto.imagen = id+"_"+data['imagen']
         db.session.commit()
         return jsonify(producto.json())
     except Exception as e:
